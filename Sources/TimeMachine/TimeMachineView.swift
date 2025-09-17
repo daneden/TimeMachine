@@ -51,13 +51,11 @@ public struct TimeMachineView: View {
 		self.showAbsoluteTime = showAbsoluteTime
 	}
 	
-	@State private var showDatePicker = false
-	
 	@ViewBuilder
 	private var toggleButtonLabel: some View {
 		HStack {
 			Image(systemName: "chevron.forward")
-				.rotationEffect(showDatePicker ? .degrees(90) : .zero)
+				.rotationEffect(timeMachine.interfaceState.datePickerVisible ? .degrees(90) : .zero)
 				.imageScale(.small)
 			
 			timeTravelLabel
@@ -80,7 +78,7 @@ public struct TimeMachineView: View {
 						return Text(timeMachine.formattedOffset)
 					}
 				case .datePickerVisible:
-					if showDatePicker {
+					if timeMachine.interfaceState.datePickerVisible {
 						return Text(timeMachine.date, format: formatter)
 					} else if timeMachine.isActive {
 						return Text(timeMachine.formattedOffset)
@@ -116,7 +114,7 @@ public struct TimeMachineView: View {
 		VStack {
 			HStack {
 				if enableDatePicker {
-					Toggle(isOn: $showDatePicker.animation()) {
+					Toggle(isOn: $timeMachine.interfaceState.datePickerVisible.animation()) {
 						toggleButtonLabel
 					}
 					.accessibilityLabel(Text("Toggle date picker"))
@@ -154,7 +152,7 @@ public struct TimeMachineView: View {
 			}
 			#endif
 			
-			if enableDatePicker && showDatePicker {
+			if enableDatePicker && timeMachine.interfaceState.datePickerVisible {
 				DatePicker(selection: $timeMachine.date, displayedComponents: datePickerComponents) {
 					datePickerLabel
 				}

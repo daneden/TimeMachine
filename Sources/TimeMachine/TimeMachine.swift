@@ -39,6 +39,8 @@ final public class TimeMachine {
 		}
 	}
 	
+	public var interfaceState = InterfaceState()
+	
 	public func updateReferenceDate(to newDate: Date = .now) {
 		referenceDate = newDate
 	}
@@ -130,5 +132,11 @@ public extension TimeMachine {
 			maximumUnitCount: 3,
 			fractionalPart: .hide(rounded: .toNearestOrAwayFromZero)
 		))
+	}
+}
+
+public extension TimeMachine {
+	struct InterfaceState {
+		public var datePickerVisible = false
 	}
 }
