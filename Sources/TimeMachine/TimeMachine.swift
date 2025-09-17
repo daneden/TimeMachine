@@ -6,18 +6,18 @@ import OSLog
 final public class TimeMachine {
 	nonisolated init() { }
 	
-	init(referenceDate: Date = .now,
-			 incrementUnit: Calendar.Component = .day,
-			 incrementRange: ClosedRange<Double> = -12...12) {
+	public init(referenceDate: Date = .now,
+							incrementUnit: Calendar.Component = .day,
+							incrementRange: ClosedRange<Double> = -12...12) {
 		self.referenceDate = referenceDate
 		self.incrementUnit = incrementUnit
 		self.range = incrementRange
 	}
 	
 	// MARK: Reference values and constants
-	private(set) var referenceDate: Date = .now
-	private(set) var incrementUnit: Calendar.Component = .day
-	private(set) var range: ClosedRange<Double> = -12...12
+	public private(set) var referenceDate: Date = .now
+	public private(set) var incrementUnit: Calendar.Component = .day
+	public private(set) var range: ClosedRange<Double> = -12...12
 	
 	// MARK: Variables
 	public var offset: Double = 0

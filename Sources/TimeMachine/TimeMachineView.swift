@@ -7,6 +7,14 @@
 
 import SwiftUI
 
+public struct DatePickerActivePreferenceKey: PreferenceKey {
+	public static let defaultValue: Bool = false
+	
+	public static func reduce(value: inout Bool, nextValue: () -> Bool) {
+		value = nextValue()
+	}
+}
+
 public extension TimeMachineView {
 	enum AbsoluteTimeVisibility {
 		case always, never, datePickerVisible
