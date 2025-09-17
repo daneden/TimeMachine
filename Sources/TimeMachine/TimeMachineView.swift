@@ -32,7 +32,7 @@ public struct TimeMachineView: View {
 	@ViewBuilder let label: Text
 	@ViewBuilder let datePickerLabel: Text
 	
-	init(
+	public init(
 		sliderStep: Double = 1,
 		enableDatePicker: Bool = true,
 		datePickerComponents: DatePickerComponents = [.date, .hourAndMinute],
