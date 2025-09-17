@@ -20,9 +20,9 @@ final public class TimeMachine {
 	private(set) var range: ClosedRange<Double> = -12...12
 	
 	// MARK: Variables
-	var offset: Double = 0
+	public var offset: Double = 0
 	
-	var date: Date {
+	public var date: Date {
 		get {
 			Calendar.current.date(byAdding: incrementUnit, value: Int(offset), to: referenceDate) ?? referenceDate
 		}
@@ -32,19 +32,19 @@ final public class TimeMachine {
 		}
 	}
 	
-	func updateReferenceDate(to newDate: Date = .now) {
+	public func updateReferenceDate(to newDate: Date = .now) {
 		referenceDate = newDate
 	}
 	
-	func reset() { offset = 0 }
+	public func reset() { offset = 0 }
 	
 	// MARK: Computed variables
 	@ObservationIgnored
-	var formattedOffset: String {
+	public var formattedOffset: String {
 		formatDuration(offsetInSeconds)
 	}
 	
-	var isActive: Bool { offset != 0 }
+	public var isActive: Bool { offset != 0 }
 }
 
 internal extension TimeMachine {
