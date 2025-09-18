@@ -31,7 +31,7 @@ final public class TimeMachine {
 	
 	public var date: Date {
 		get {
-			Calendar.current.date(byAdding: incrementUnit, value: Int(offset), to: referenceDate) ?? referenceDate
+			Calendar.current.date(byAdding: incrementUnit, value: Int(offset.rounded(.toNearestOrAwayFromZero)), to: referenceDate) ?? referenceDate
 		}
 		
 		set {
@@ -51,6 +51,11 @@ final public class TimeMachine {
 	@ObservationIgnored
 	public var formattedOffset: String {
 		formatDuration(offsetInSeconds)
+	}
+	
+	@ObservationIgnored
+	public var formattedRoundedOffset: String {
+		formatDuration(roundedOffset)
 	}
 	
 	public var isActive: Bool { offset != 0 }
@@ -117,6 +122,10 @@ private extension TimeMachine {
 }
 
 public extension TimeMachine {
+	var roundedOffset: Double {
+		offsetInSeconds(convertTime(from: offsetInSeconds, to: incrementUnit).rounded(.toNearestOrAwayFromZero))
+	}
+	
 	var rangeLowerBoundSeconds: TimeInterval {
 		offsetInSeconds(range.lowerBound)
 	}

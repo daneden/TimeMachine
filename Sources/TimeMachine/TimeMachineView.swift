@@ -21,7 +21,12 @@ public extension TimeMachineView {
 	}
 }
 
+public extension EnvironmentValues {
+	@Entry var timeMachineViewHeaderFontWeight = Font.Weight.semibold
+}
+
 public struct TimeMachineView: View {
+	@Environment(\.timeMachineViewHeaderFontWeight) var headerFontWeight
 	@Environment(\.timeMachine) var timeMachine
 	@Environment(\.timeZone) var timeZone
 	
@@ -33,7 +38,7 @@ public struct TimeMachineView: View {
 	@ViewBuilder let datePickerLabel: Text
 	
 	public init(
-		sliderStep: Double = 1,
+		sliderStep: Double = -1,
 		enableDatePicker: Bool = true,
 		datePickerComponents: DatePickerComponents = [.date, .hourAndMinute],
 		showAbsoluteTime: AbsoluteTimeVisibility = .datePickerVisible,
@@ -57,6 +62,7 @@ public struct TimeMachineView: View {
 			Image(systemName: "chevron.forward")
 				.rotationEffect(timeMachine.interfaceState.datePickerVisible ? .degrees(90) : .zero)
 				.imageScale(.small)
+				.foregroundStyle(.secondary)
 			
 			timeTravelLabel
 		}
@@ -65,28 +71,30 @@ public struct TimeMachineView: View {
 	@ViewBuilder
 	private var timeTravelLabel: some View {
 		Label {
-			let labelValue: Text = {
+			var labelValue: Text {
 				var formatStyle = Date.FormatStyle()
 				formatStyle.timeZone = timeZone
 				let formatter = formatStyle.day().month().year().hour().minute()
+				
+				let activeLabel = Text("\(timeMachine.date, style: .time) (\(timeMachine.formattedRoundedOffset))")
 				
 				switch showAbsoluteTime {
 				case .always:
 					return Text(timeMachine.date, format: formatter)
 				case .never:
 					if timeMachine.isActive {
-						return Text(timeMachine.formattedOffset)
+						return activeLabel
 					}
 				case .datePickerVisible:
 					if timeMachine.interfaceState.datePickerVisible {
 						return Text(timeMachine.date, format: formatter)
 					} else if timeMachine.isActive {
-						return Text(timeMachine.formattedOffset)
+						return activeLabel
 					}
 				}
 				
 				return label
-			}()
+			}
 			
 			labelValue
 				.contentTransition(.numericText())
@@ -133,7 +141,8 @@ public struct TimeMachineView: View {
 				}
 				.disabled(!timeMachine.isActive)
 			}
-			
+			.fontWeight(headerFontWeight)
+
 			#if os(watchOS)
 			fallbackSlider
 			#else
@@ -191,12 +200,19 @@ private struct TimeMachineViewPreview: View {
 	
 	var body: some View {
 		NavigationStack {
-			VStack {
+			VStack(spacing: -40) {
 				Spacer()
-				Text(timeMachine.date, style: .time)
-					.font(.system(size: 300))
-					.fontWidth(.compressed)
-					.fontWeight(.ultraLight)
+				Group {
+					Text(timeMachine.date, style: .date)
+						.font(.system(size: 32).leading(.tight))
+						.fontWidth(.expanded)
+						.fontWeight(.medium)
+					
+					Text(timeMachine.date, style: .time)
+						.font(.system(size: 300).leading(.tight))
+						.fontWidth(.compressed)
+						.fontWeight(.ultraLight)
+				}
 					.frame(maxWidth: .infinity)
 					.contentTransition(.numericText())
 					.animation(.default, value: timeMachine.date)
@@ -204,11 +220,12 @@ private struct TimeMachineViewPreview: View {
 				Spacer()
 			}
 			.safeAreaBar(edge: .bottom) {
-				TimeMachineView(sliderStep: 1, datePickerComponents: .hourAndMinute) {
+				TimeMachineView(sliderStep: 60, datePickerComponents: .hourAndMinute, datePickerLabel: {
 					Text("Choose time")
-				}
+				})
 					.padding()
 					.glassEffect(in: .rect(cornerRadius: 20, style: .continuous))
+					.clipped()
 					.scenePadding()
 			}
 		}
@@ -219,7 +236,7 @@ private struct TimeMachineViewPreview: View {
 #Preview {
 	if #available(iOS 26, visionOS 26, watchOS 26, macOS 26, *) {
 		TimeMachineViewPreview()
-			.withTimeMachine(incrementUnit: .hour, incrementRange: -12...12)
+			.withTimeMachine(incrementUnit: .minute, incrementRange: -720...720)
 	}
 }
 #endif
