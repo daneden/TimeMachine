@@ -111,12 +111,23 @@ public struct TimeMachineView: View {
 	
 	@ViewBuilder private var fallbackSlider: some View {
 		@Bindable var timeMachine = timeMachine
-		Slider(value: $timeMachine.offset, in: timeMachine.range, step: sliderStep) {
-			Text("Offset")
-		} minimumValueLabel: {
-			SliderValueLabel(timeMachine.formatDuration(timeMachine.rangeLowerBoundSeconds))
-		} maximumValueLabel: {
-			SliderValueLabel(timeMachine.formatDuration(timeMachine.rangeUpperBoundSeconds))
+		
+		if sliderStep <= 0 {
+			Slider(value: $timeMachine.offset, in: timeMachine.range) {
+				Text("Offset")
+			} minimumValueLabel: {
+				SliderValueLabel(timeMachine.formatDuration(timeMachine.rangeLowerBoundSeconds))
+			} maximumValueLabel: {
+				SliderValueLabel(timeMachine.formatDuration(timeMachine.rangeUpperBoundSeconds))
+			}
+		} else {
+			Slider(value: $timeMachine.offset, in: timeMachine.range, step: sliderStep) {
+				Text("Offset")
+			} minimumValueLabel: {
+				SliderValueLabel(timeMachine.formatDuration(timeMachine.rangeLowerBoundSeconds))
+			} maximumValueLabel: {
+				SliderValueLabel(timeMachine.formatDuration(timeMachine.rangeUpperBoundSeconds))
+			}
 		}
 	}
 	
