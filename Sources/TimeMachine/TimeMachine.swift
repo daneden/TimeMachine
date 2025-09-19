@@ -61,14 +61,25 @@ final public class TimeMachine {
 	public var isActive: Bool { offset != 0 }
 }
 
+@MainActor fileprivate var defaultAccessCount = 0
+
 internal extension TimeMachine {
 	nonisolated static let `default`: TimeMachine = {
-		Logger(subsystem: "me.daneden.framework", category: "TimeMachine")
-			.warning("""
-				The `TimeMachine.default` singleton was unexpectedly accessed.
+		Task {
+			await MainActor.run() {
+				defaultAccessCount += 1
 				
-				This usually happens when `TimeMachineView` is rendered or the `\\.timeMachine` environment variable is accessed without calling `.withTimeMachine()` on an ancestor view.
-				""")
+				if defaultAccessCount > 1 {
+					Logger(subsystem: "me.daneden.framework", category: "TimeMachine")
+						.warning("""
+	The `TimeMachine.default` singleton was unexpectedly accessed.
+	
+	This usually happens when `TimeMachineView` is rendered or the `\\.timeMachine` environment variable is accessed without calling `.withTimeMachine()` on an ancestor view.
+	""")
+				}
+			}
+		}
+		
 		return TimeMachine()
 	}()
 }
