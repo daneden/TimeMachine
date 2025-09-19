@@ -24,11 +24,13 @@ public extension TimeMachineView {
 public extension EnvironmentValues {
 	@Entry var timeMachineViewHeaderFontWeight = Font.Weight.semibold
 	@Entry var timeMachineViewHeaderTimestampFormat = Text.DateStyle.time
+	@Entry var timeMachineViewHeaderShowRelativeOffset = true
 }
 
 public struct TimeMachineView: View {
 	@Environment(\.timeMachineViewHeaderFontWeight) var headerFontWeight
 	@Environment(\.timeMachineViewHeaderTimestampFormat) var timestampFormat
+	@Environment(\.timeMachineViewHeaderShowRelativeOffset) var showOffsetInHeader
 	@Environment(\.timeMachine) var timeMachine
 	@Environment(\.timeZone) var timeZone
 	
@@ -78,7 +80,7 @@ public struct TimeMachineView: View {
 				formatStyle.timeZone = timeZone
 				let formatter = formatStyle.day().month().year().hour().minute()
 				
-				let activeLabel = Text("\(timeMachine.date, style: timestampFormat) (\(timeMachine.formattedRoundedOffset))")
+				let activeLabel = Text("\(timeMachine.date, style: timestampFormat)\(showOffsetInHeader ? " (\(timeMachine.formattedRoundedOffset))" : "")")
 				
 				switch showAbsoluteTime {
 				case .always:
