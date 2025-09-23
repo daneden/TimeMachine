@@ -21,7 +21,6 @@ public struct DatePickerActivePreferenceKey: PreferenceKey {
 
 public extension EnvironmentValues {
 	@Entry var timeMachineViewHeaderFontWeight = Font.Weight.semibold
-	@Entry var timeMachineViewHeaderTimestampFormat = Text.DateStyle.time
 }
 
 public struct TimeMachineView<L: View>: View {
@@ -36,30 +35,11 @@ public struct TimeMachineView<L: View>: View {
 	public var datePickerComponents: DatePickerComponents = [.date, .hourAndMinute]
 	
 	@ViewBuilder public var label: L
-	
-	public var absoluteTimestampLabel: LabelBuilder = { t, tz in
-		var formatStyle = Date.FormatStyle()
-		formatStyle.timeZone = tz ?? .autoupdatingCurrent
-		let formatter = formatStyle.day().month().year().hour().minute()
-		
-		return Text(t.date, format: formatter)
-	}
-	
-	public var relativeTimestampLabel: LabelBuilder = { t, tz in
-		relativeTimeStampBuilder(style: .date, timeMachine: t, timeZone: tz)
-	}
-	
-	public var minimumValueLabel: LabelBuilder = { t, _ in
-		Text(t.formatDuration(t.rangeLowerBoundSeconds))
-	}
-	
-	public var maximumValueLabel: LabelBuilder = { t, _ in
-		Text(t.formatDuration(t.rangeUpperBoundSeconds))
-	}
-	
-	public var datePickerLabel: LabelBuilder = { _, _ in
-		Text("Choose date/time")
-	}
+	public var absoluteTimestampLabel: LabelBuilder
+	public var relativeTimestampLabel: LabelBuilder
+	public var minimumValueLabel: LabelBuilder
+	public var maximumValueLabel: LabelBuilder
+	public var datePickerLabel: LabelBuilder
 	
 	public var body: some View {
 		@Bindable var timeMachine = self.timeMachine
@@ -191,6 +171,45 @@ private extension TimeMachineView {
 			text
 				.textScale(.secondary)
 		}
+	}
+}
+
+public extension TimeMachineView {
+	init(
+		sliderStep: Double = -1,
+		enableDatePicker: Bool = true,
+		showAbsoluteTime: AbsoluteTimeVisibility = .datePickerVisible,
+		datePickerComponents: DatePickerComponents = [.date, .hourAndMinute],
+		@ViewBuilder label: () -> L,
+		absoluteTimestampLabel: @escaping LabelBuilder = { t, tz in
+			var formatStyle = Date.FormatStyle()
+			formatStyle.timeZone = tz ?? .autoupdatingCurrent
+			let formatter = formatStyle.day().month().year().hour().minute()
+			return Text(t.date, format: formatter)
+		},
+		relativeTimestampLabel: @escaping LabelBuilder = { t, tz in
+			relativeTimeStampBuilder(style: .date, timeMachine: t, timeZone: tz)
+		},
+		minimumValueLabel: @escaping LabelBuilder = { t, _ in
+			Text(t.formatDuration(t.rangeLowerBoundSeconds))
+		},
+		maximumValueLabel: @escaping LabelBuilder = { t, _ in
+			Text(t.formatDuration(t.rangeUpperBoundSeconds))
+		},
+		datePickerLabel: @escaping LabelBuilder = { _, _ in
+			Text("Choose date/time")
+		}
+	) {
+		self.sliderStep = sliderStep
+		self.enableDatePicker = enableDatePicker
+		self.showAbsoluteTime = showAbsoluteTime
+		self.datePickerComponents = datePickerComponents
+		self.label = label()
+		self.absoluteTimestampLabel = absoluteTimestampLabel
+		self.relativeTimestampLabel = relativeTimestampLabel
+		self.minimumValueLabel = minimumValueLabel
+		self.maximumValueLabel = maximumValueLabel
+		self.datePickerLabel = datePickerLabel
 	}
 }
 
