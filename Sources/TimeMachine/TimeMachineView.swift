@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+public enum AbsoluteTimeVisibility {
+	case always, never, datePickerVisible
+}
+
 public struct DatePickerActivePreferenceKey: PreferenceKey {
 	public static let defaultValue: Bool = false
 	
@@ -15,120 +19,46 @@ public struct DatePickerActivePreferenceKey: PreferenceKey {
 	}
 }
 
-public extension TimeMachineView {
-	enum AbsoluteTimeVisibility {
-		case always, never, datePickerVisible
-	}
-}
-
 public extension EnvironmentValues {
 	@Entry var timeMachineViewHeaderFontWeight = Font.Weight.semibold
 	@Entry var timeMachineViewHeaderTimestampFormat = Text.DateStyle.time
-	@Entry var timeMachineViewHeaderShowRelativeOffset = true
 }
 
-public struct TimeMachineView: View {
+public struct TimeMachineView<L: View>: View {
+	typealias LabelBuilder = (TimeMachine, TimeZone?) -> Text
 	@Environment(\.timeMachineViewHeaderFontWeight) var headerFontWeight
-	@Environment(\.timeMachineViewHeaderTimestampFormat) var timestampFormat
-	@Environment(\.timeMachineViewHeaderShowRelativeOffset) var showOffsetInHeader
 	@Environment(\.timeMachine) var timeMachine
 	@Environment(\.timeZone) var timeZone
 	
-	let sliderStep: Double
-	let enableDatePicker: Bool
-	let showAbsoluteTime: AbsoluteTimeVisibility
-	let datePickerComponents: DatePickerComponents
-	@ViewBuilder let label: Text
-	@ViewBuilder let datePickerLabel: Text
+	var sliderStep: Double = -1
+	var enableDatePicker: Bool = true
+	var showAbsoluteTime: AbsoluteTimeVisibility = .datePickerVisible
+	var datePickerComponents: DatePickerComponents = [.date, .hourAndMinute]
 	
-	public init(
-		sliderStep: Double = -1,
-		enableDatePicker: Bool = true,
-		datePickerComponents: DatePickerComponents = [.date, .hourAndMinute],
-		showAbsoluteTime: AbsoluteTimeVisibility = .datePickerVisible,
-		@ViewBuilder label: @escaping () -> Text = {
-			Text("Time Travel")
-		},
-		@ViewBuilder datePickerLabel: @escaping () -> Text = {
-			Text("Date")
-		}) {
-		self.sliderStep = sliderStep
-		self.enableDatePicker = enableDatePicker
-		self.datePickerComponents = datePickerComponents
-		self.label = label()
-		self.datePickerLabel = datePickerLabel()
-		self.showAbsoluteTime = showAbsoluteTime
-	}
+	@ViewBuilder var label: L
 	
-	@ViewBuilder
-	private var toggleButtonLabel: some View {
-		HStack {
-			Image(systemName: "chevron.forward")
-				.rotationEffect(timeMachine.interfaceState.datePickerVisible ? .degrees(90) : .zero)
-				.imageScale(.small)
-				.foregroundStyle(.secondary)
-			
-			timeTravelLabel
-		}
-	}
-	
-	@ViewBuilder
-	private var timeTravelLabel: some View {
-		Label {
-			var labelValue: Text {
-				var formatStyle = Date.FormatStyle()
-				formatStyle.timeZone = timeZone
-				let formatter = formatStyle.day().month().year().hour().minute()
-				
-				let activeLabel = Text("\(timeMachine.date, style: timestampFormat)\(showOffsetInHeader ? " (\(timeMachine.formattedRoundedOffset))" : "")")
-				
-				switch showAbsoluteTime {
-				case .always:
-					return Text(timeMachine.date, format: formatter)
-				case .never:
-					if timeMachine.isActive {
-						return activeLabel
-					}
-				case .datePickerVisible:
-					if timeMachine.interfaceState.datePickerVisible {
-						return Text(timeMachine.date, format: formatter)
-					} else if timeMachine.isActive {
-						return activeLabel
-					}
-				}
-				
-				return label
-			}
-			
-			labelValue
-				.contentTransition(.numericText())
-				.animation(.default, value: timeMachine.date)
-				.animation(.default, value: timeMachine.isActive)
-		} icon: {
-			Image(systemName: "clock.arrow.trianglehead.2.counterclockwise.rotate.90")
-		}
-	}
-	
-	@ViewBuilder private var fallbackSlider: some View {
-		@Bindable var timeMachine = timeMachine
+	var absoluteTimestampLabel: LabelBuilder = { t, tz in
+		var formatStyle = Date.FormatStyle()
+		formatStyle.timeZone = tz ?? .autoupdatingCurrent
+		let formatter = formatStyle.day().month().year().hour().minute()
 		
-		if sliderStep <= 0 {
-			Slider(value: $timeMachine.offset, in: timeMachine.range) {
-				Text("Offset")
-			} minimumValueLabel: {
-				SliderValueLabel(timeMachine.formatDuration(timeMachine.rangeLowerBoundSeconds))
-			} maximumValueLabel: {
-				SliderValueLabel(timeMachine.formatDuration(timeMachine.rangeUpperBoundSeconds))
-			}
-		} else {
-			Slider(value: $timeMachine.offset, in: timeMachine.range, step: sliderStep) {
-				Text("Offset")
-			} minimumValueLabel: {
-				SliderValueLabel(timeMachine.formatDuration(timeMachine.rangeLowerBoundSeconds))
-			} maximumValueLabel: {
-				SliderValueLabel(timeMachine.formatDuration(timeMachine.rangeUpperBoundSeconds))
-			}
-		}
+		return Text(t.date, format: formatter)
+	}
+	
+	var relativeTimestampLabel: LabelBuilder = { t, tz in
+		relativeTimeStampBuilder(style: .date, timeMachine: t, timeZone: tz)
+	}
+	
+	var minimumValueLabel: LabelBuilder = { t, _ in
+		Text(t.formatDuration(t.rangeLowerBoundSeconds))
+	}
+	
+	var maximumValueLabel: LabelBuilder = { t, _ in
+		Text(t.formatDuration(t.rangeUpperBoundSeconds))
+	}
+	
+	var datePickerLabel: LabelBuilder = { _, _ in
+		Text("Choose date/time")
 	}
 	
 	public var body: some View {
@@ -157,44 +87,110 @@ public struct TimeMachineView: View {
 				.disabled(!timeMachine.isActive)
 			}
 			.fontWeight(headerFontWeight)
-
-			#if os(watchOS)
+			
+#if os(watchOS)
 			fallbackSlider
-			#else
+#else
 			if #available(macOS 26, iOS 26, visionOS 26, *) {
 				Slider(value: $timeMachine.offset, in: timeMachine.range, step: sliderStep, neutralValue: 0) {
 					Text("Offset")
 				} currentValueLabel: {
 					Text(timeMachine.formattedOffset)
 				} minimumValueLabel: {
-					SliderValueLabel(timeMachine.formatDuration(timeMachine.rangeLowerBoundSeconds))
+					ValueLabel(text: minimumValueLabel(timeMachine, timeZone))
 				} maximumValueLabel: {
-					SliderValueLabel(timeMachine.formatDuration(timeMachine.rangeUpperBoundSeconds))
+					ValueLabel(text: maximumValueLabel(timeMachine, timeZone))
 				}
 			} else {
 				fallbackSlider
 			}
-			#endif
+#endif
 			
 			if enableDatePicker && timeMachine.interfaceState.datePickerVisible {
 				DatePicker(selection: $timeMachine.date, displayedComponents: datePickerComponents) {
-					datePickerLabel
+					datePickerLabel(timeMachine, timeZone)
 				}
 			}
 		}
 	}
 }
 
-internal struct SliderValueLabel: View {
-	var content: AttributedString
-	
-	init(_ content: String) {
-		self.content = AttributedString(content)
+private extension TimeMachineView {
+	@ViewBuilder
+	private var toggleButtonLabel: some View {
+		HStack {
+			Image(systemName: "chevron.forward")
+				.rotationEffect(timeMachine.interfaceState.datePickerVisible ? .degrees(90) : .zero)
+				.imageScale(.small)
+				.foregroundStyle(.secondary)
+			
+			timeTravelLabel
+		}
 	}
 	
-	var body: some View {
-		Text(content)
-			.textScale(.secondary)
+	@ViewBuilder
+	private var timeTravelLabel: some View {
+		Label {
+			Group {
+				switch showAbsoluteTime {
+				case .always:
+					absoluteTimestampLabel(timeMachine, timeZone)
+				case .never:
+					if timeMachine.isActive {
+						relativeTimestampLabel(timeMachine, timeZone)
+					} else {
+						label
+					}
+				case .datePickerVisible:
+					if timeMachine.interfaceState.datePickerVisible {
+						absoluteTimestampLabel(timeMachine, timeZone)
+					} else if timeMachine.isActive {
+						relativeTimestampLabel(timeMachine, timeZone)
+					} else {
+						label
+					}
+				}
+			}
+				.transition(.blurReplace)
+				.contentTransition(.numericText())
+				.animation(.default, value: timeMachine.date)
+				.animation(.default, value: timeMachine.isActive)
+		} icon: {
+			Image(systemName: "clock.arrow.trianglehead.2.counterclockwise.rotate.90")
+		}
+	}
+	
+	@ViewBuilder private var fallbackSlider: some View {
+		@Bindable var timeMachine = timeMachine
+		
+		if sliderStep <= 0 {
+			Slider(value: $timeMachine.offset, in: timeMachine.range) {
+				Text("Offset")
+			} minimumValueLabel: {
+				ValueLabel(text: minimumValueLabel(timeMachine, timeZone))
+			} maximumValueLabel: {
+				ValueLabel(text: maximumValueLabel(timeMachine, timeZone))
+			}
+		} else {
+			Slider(value: $timeMachine.offset, in: timeMachine.range, step: sliderStep) {
+				Text("Offset")
+			} minimumValueLabel: {
+				ValueLabel(text: minimumValueLabel(timeMachine, timeZone))
+			} maximumValueLabel: {
+				ValueLabel(text: maximumValueLabel(timeMachine, timeZone))
+			}
+		}
+	}
+}
+
+private extension TimeMachineView {
+	struct ValueLabel: View {
+		var text: Text
+		
+		var body: some View {
+			text
+				.textScale(.secondary)
+		}
 	}
 }
 
@@ -208,50 +204,6 @@ internal struct TimeMachineToggleStyle: ToggleStyle {
 	}
 }
 
-#if os(iOS)
-@available(iOS 26, *)
-private struct TimeMachineViewPreview: View {
-	@Environment(\.timeMachine) var timeMachine
-	
-	var body: some View {
-		NavigationStack {
-			VStack(spacing: -40) {
-				Spacer()
-				Group {
-					Text(timeMachine.date, style: .date)
-						.font(.system(size: 32).leading(.tight))
-						.fontWidth(.expanded)
-						.fontWeight(.medium)
-					
-					Text(timeMachine.date, style: .time)
-						.font(.system(size: 300).leading(.tight))
-						.fontWidth(.compressed)
-						.fontWeight(.ultraLight)
-				}
-					.frame(maxWidth: .infinity)
-					.contentTransition(.numericText())
-					.animation(.default, value: timeMachine.date)
-					.foregroundStyle(.tint)
-				Spacer()
-			}
-			.safeAreaBar(edge: .bottom) {
-				TimeMachineView(sliderStep: 60, datePickerComponents: .hourAndMinute, datePickerLabel: {
-					Text("Choose time")
-				})
-					.padding()
-					.glassEffect(in: .rect(cornerRadius: 20, style: .continuous))
-					.clipped()
-					.scenePadding()
-			}
-		}
-		.preferredColorScheme(.dark)
-	}
+@MainActor public func relativeTimeStampBuilder(style: Text.DateStyle, timeMachine: TimeMachine, timeZone: TimeZone?) -> Text {
+	Text("\(timeMachine.date, style: style) (\(timeMachine.formattedOffset))")
 }
-
-#Preview {
-	if #available(iOS 26, visionOS 26, watchOS 26, macOS 26, *) {
-		TimeMachineViewPreview()
-			.withTimeMachine(incrementUnit: .minute, incrementRange: -720...720)
-	}
-}
-#endif
