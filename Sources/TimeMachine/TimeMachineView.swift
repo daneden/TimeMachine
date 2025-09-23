@@ -25,19 +25,19 @@ public extension EnvironmentValues {
 }
 
 public struct TimeMachineView<L: View>: View {
-	typealias LabelBuilder = (TimeMachine, TimeZone?) -> Text
+	public typealias LabelBuilder = (TimeMachine, TimeZone?) -> Text
 	@Environment(\.timeMachineViewHeaderFontWeight) var headerFontWeight
 	@Environment(\.timeMachine) var timeMachine
 	@Environment(\.timeZone) var timeZone
 	
-	var sliderStep: Double = -1
-	var enableDatePicker: Bool = true
-	var showAbsoluteTime: AbsoluteTimeVisibility = .datePickerVisible
-	var datePickerComponents: DatePickerComponents = [.date, .hourAndMinute]
+	public var sliderStep: Double = -1
+	public var enableDatePicker: Bool = true
+	public var showAbsoluteTime: AbsoluteTimeVisibility = .datePickerVisible
+	public var datePickerComponents: DatePickerComponents = [.date, .hourAndMinute]
 	
-	@ViewBuilder var label: L
+	@ViewBuilder public var label: L
 	
-	var absoluteTimestampLabel: LabelBuilder = { t, tz in
+	public var absoluteTimestampLabel: LabelBuilder = { t, tz in
 		var formatStyle = Date.FormatStyle()
 		formatStyle.timeZone = tz ?? .autoupdatingCurrent
 		let formatter = formatStyle.day().month().year().hour().minute()
@@ -45,19 +45,19 @@ public struct TimeMachineView<L: View>: View {
 		return Text(t.date, format: formatter)
 	}
 	
-	var relativeTimestampLabel: LabelBuilder = { t, tz in
+	public var relativeTimestampLabel: LabelBuilder = { t, tz in
 		relativeTimeStampBuilder(style: .date, timeMachine: t, timeZone: tz)
 	}
 	
-	var minimumValueLabel: LabelBuilder = { t, _ in
+	public var minimumValueLabel: LabelBuilder = { t, _ in
 		Text(t.formatDuration(t.rangeLowerBoundSeconds))
 	}
 	
-	var maximumValueLabel: LabelBuilder = { t, _ in
+	public var maximumValueLabel: LabelBuilder = { t, _ in
 		Text(t.formatDuration(t.rangeUpperBoundSeconds))
 	}
 	
-	var datePickerLabel: LabelBuilder = { _, _ in
+	public var datePickerLabel: LabelBuilder = { _, _ in
 		Text("Choose date/time")
 	}
 	
