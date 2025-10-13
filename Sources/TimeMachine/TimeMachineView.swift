@@ -220,9 +220,17 @@ internal struct TimeMachineToggleStyle: ToggleStyle {
 		} label: {
 			configuration.label
 		}
+		.contentShape(.rect)
+		.buttonStyle(.plain)
 	}
 }
 
 @MainActor public func relativeTimeStampBuilder(style: Text.DateStyle, timeMachine: TimeMachine, timeZone: TimeZone?) -> Text {
 	Text("\(timeMachine.date, style: style) (\(timeMachine.formattedOffset))")
+}
+
+#Preview {
+	TimeMachineView {
+		Text("Time Travel")
+	}
 }
