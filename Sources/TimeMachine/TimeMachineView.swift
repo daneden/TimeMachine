@@ -72,15 +72,7 @@ public struct TimeMachineView<L: View>: View {
 			fallbackSlider
 #else
 			if #available(macOS 26, iOS 26, visionOS 26, *) {
-				Slider(value: $timeMachine.offset, in: timeMachine.range, step: sliderStep, neutralValue: 0) {
-					Text("Offset")
-				} currentValueLabel: {
-					Text(timeMachine.formattedOffset)
-				} minimumValueLabel: {
-					ValueLabel(text: minimumValueLabel(timeMachine, timeZone))
-				} maximumValueLabel: {
-					ValueLabel(text: maximumValueLabel(timeMachine, timeZone))
-				}
+				preferredSlider
 			} else {
 				fallbackSlider
 			}
@@ -137,6 +129,34 @@ private extension TimeMachineView {
 				.animation(.default, value: timeMachine.isActive)
 		} icon: {
 			Image(systemName: "clock.arrow.trianglehead.2.counterclockwise.rotate.90")
+		}
+	}
+	
+	@available(iOS 26, macOS 26, visionOS 26, watchOS 26, *)
+	@ViewBuilder private var preferredSlider: some View {
+		@Bindable var timeMachine = timeMachine
+		
+		// Duplicating this Slider initializer isn't ideal, but doing it to avoid a crash that seems related to it
+		if sliderStep <= 0 {
+			Slider(value: $timeMachine.offset, in: timeMachine.range, neutralValue: 0) {
+				Text("Offset")
+			} currentValueLabel: {
+				Text(timeMachine.formattedOffset)
+			} minimumValueLabel: {
+				ValueLabel(text: minimumValueLabel(timeMachine, timeZone))
+			} maximumValueLabel: {
+				ValueLabel(text: maximumValueLabel(timeMachine, timeZone))
+			}
+		} else {
+			Slider(value: $timeMachine.offset, in: timeMachine.range, step: sliderStep, neutralValue: 0) {
+				Text("Offset")
+			} currentValueLabel: {
+				Text(timeMachine.formattedOffset)
+			} minimumValueLabel: {
+				ValueLabel(text: minimumValueLabel(timeMachine, timeZone))
+			} maximumValueLabel: {
+				ValueLabel(text: maximumValueLabel(timeMachine, timeZone))
+			}
 		}
 	}
 	
