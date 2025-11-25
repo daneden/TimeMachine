@@ -46,25 +46,27 @@ public struct TimeMachineView<L: View>: View {
 		
 		VStack {
 			HStack {
-				if enableDatePicker {
-					Toggle(isOn: $timeMachine.interfaceState.datePickerVisible.animation()) {
-						toggleButtonLabel
+				Group {
+					if enableDatePicker {
+						Toggle(isOn: $timeMachine.interfaceState.datePickerVisible.animation()) {
+							toggleButtonLabel
+						}
+						.accessibilityLabel(Text("Toggle date picker"))
+						.toggleStyle(TimeMachineToggleStyle())
+						.tint(.primary)
+					} else {
+						timeTravelLabelThatFits
 					}
-					.accessibilityLabel(Text("Toggle date picker"))
-					.toggleStyle(TimeMachineToggleStyle())
-					.tint(.primary)
-				} else {
-					timeTravelLabel
 				}
+				.layoutPriority(1)
 				
 				Spacer()
 				
-				Button("Reset", systemImage: "arrow.counterclockwise") {
-					withAnimation {
-						timeMachine.reset()
-					}
+				ViewThatFits(in: .horizontal) {
+					resetButton
+					
+					resetButton.labelStyle(.iconOnly)
 				}
-				.disabled(!timeMachine.isActive)
 			}
 			.fontWeight(headerFontWeight)
 			
@@ -79,8 +81,16 @@ public struct TimeMachineView<L: View>: View {
 #endif
 			
 			if enableDatePicker && timeMachine.interfaceState.datePickerVisible {
-				DatePicker(selection: $timeMachine.date, displayedComponents: datePickerComponents) {
-					datePickerLabel(timeMachine, timeZone)
+				ViewThatFits {
+					DatePicker(selection: $timeMachine.date, displayedComponents: datePickerComponents) {
+						datePickerLabel(timeMachine, timeZone)
+					}
+					
+					DatePicker(selection: $timeMachine.date, displayedComponents: datePickerComponents) {
+						datePickerLabel(timeMachine, timeZone)
+					}
+					.labelsHidden()
+					.frame(maxWidth: .infinity, alignment: .trailing)
 				}
 			}
 		}
@@ -96,7 +106,16 @@ private extension TimeMachineView {
 				.imageScale(.small)
 				.foregroundStyle(.secondary)
 			
+			timeTravelLabelThatFits
+		}
+	}
+	
+	@ViewBuilder
+	private var timeTravelLabelThatFits: some View {
+		ViewThatFits(in: .horizontal) {
 			timeTravelLabel
+			
+			timeTravelLabel.labelStyle(.titleOnly)
 		}
 	}
 	
@@ -123,10 +142,14 @@ private extension TimeMachineView {
 					}
 				}
 			}
+				.allowsTightening(true)
 				.transition(.blurReplace)
 				.contentTransition(.numericText())
 				.animation(.default, value: timeMachine.date)
 				.animation(.default, value: timeMachine.isActive)
+				.minimumScaleFactor(0.8)
+				.lineLimit(2)
+				.truncationMode(.middle)
 		} icon: {
 			Image(systemName: "clock.arrow.trianglehead.2.counterclockwise.rotate.90")
 		}
@@ -180,6 +203,16 @@ private extension TimeMachineView {
 				ValueLabel(text: maximumValueLabel(timeMachine, timeZone))
 			}
 		}
+	}
+	
+	@ViewBuilder
+	var resetButton: some View {
+		Button("Reset", systemImage: "arrow.counterclockwise") {
+			withAnimation {
+				timeMachine.reset()
+			}
+		}
+		.disabled(!timeMachine.isActive)
 	}
 }
 
