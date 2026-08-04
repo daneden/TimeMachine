@@ -43,8 +43,14 @@ public struct TimeMachineView<L: View>: View {
 
 	public var body: some View {
 		@Bindable var timeMachine = self.timeMachine
+		
+		#if os(visionOS)
+		let spacing: CGFloat = 16
+		#else
+		let spacing: CGFloat = 8
+		#endif
 
-		VStack(spacing: 8) {
+		VStack(spacing: spacing) {
 			HStack {
 				Group {
 					if enableDatePicker {
@@ -212,7 +218,11 @@ private extension TimeMachineView {
 			}
 		}
 		.disabled(!timeMachine.isActive)
+		#if os(visionOS)
+		.buttonStyle(PaddedPlainButtonStyle())
+		#else
 		.buttonStyle(PaddedPlainButtonStyle(tinted: true))
+		#endif
 	}
 }
 
@@ -288,6 +298,7 @@ struct PaddedPlainButtonStyle: ButtonStyle {
 			.padding(.vertical, 4)
 			.padding(.horizontal, 8)
 			.contentShape(ButtonBorderShape.automatic)
+			.hoverEffect(.automatic)
 			.padding(.vertical, -4)
 			.padding(.horizontal, -8)
 	}
