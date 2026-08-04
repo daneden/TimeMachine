@@ -13,7 +13,7 @@ public enum AbsoluteTimeVisibility {
 
 public struct DatePickerActivePreferenceKey: PreferenceKey {
 	public static let defaultValue: Bool = false
-	
+
 	public static func reduce(value: inout Bool, nextValue: () -> Bool) {
 		value = nextValue()
 	}
@@ -28,23 +28,23 @@ public struct TimeMachineView<L: View>: View {
 	@Environment(\.timeMachineViewHeaderFontWeight) var headerFontWeight
 	@Environment(\.timeMachine) var timeMachine
 	@Environment(\.timeZone) var timeZone
-	
+
 	public var sliderStep: Double = -1
 	public var enableDatePicker: Bool = true
 	public var showAbsoluteTime: AbsoluteTimeVisibility = .datePickerVisible
 	public var datePickerComponents: DatePickerComponents = [.date, .hourAndMinute]
-	
+
 	@ViewBuilder public var label: L
 	public var absoluteTimestampLabel: LabelBuilder
 	public var relativeTimestampLabel: LabelBuilder
 	public var minimumValueLabel: LabelBuilder
 	public var maximumValueLabel: LabelBuilder
 	public var datePickerLabel: LabelBuilder
-	
+
 	public var body: some View {
 		@Bindable var timeMachine = self.timeMachine
-		
-		VStack {
+
+		VStack(spacing: 8) {
 			HStack {
 				Group {
 					if enableDatePicker {
@@ -59,33 +59,36 @@ public struct TimeMachineView<L: View>: View {
 					}
 				}
 				.layoutPriority(1)
-				
+
 				Spacer()
-				
+
 				ViewThatFits(in: .horizontal) {
 					resetButton
-					
+
 					resetButton.labelStyle(.iconOnly)
 				}
 			}
 			.fontWeight(headerFontWeight)
-			
-#if os(watchOS)
-			fallbackSlider
-#else
-			if #available(macOS 26, iOS 26, visionOS 26, *) {
-				preferredSlider
-			} else {
+
+			Group {
+				#if os(watchOS)
 				fallbackSlider
+				#else
+				if #available(macOS 26, iOS 26, visionOS 26, *) {
+					preferredSlider
+				} else {
+					fallbackSlider
+				}
+				#endif
 			}
-#endif
-			
+			.labelsHidden()
+
 			if enableDatePicker && timeMachine.interfaceState.datePickerVisible {
 				ViewThatFits {
 					DatePicker(selection: $timeMachine.date, displayedComponents: datePickerComponents) {
 						datePickerLabel(timeMachine, timeZone)
 					}
-					
+
 					DatePicker(selection: $timeMachine.date, displayedComponents: datePickerComponents) {
 						datePickerLabel(timeMachine, timeZone)
 					}
@@ -98,28 +101,25 @@ public struct TimeMachineView<L: View>: View {
 }
 
 private extension TimeMachineView {
-	@ViewBuilder
 	private var toggleButtonLabel: some View {
 		HStack {
 			Image(systemName: "chevron.forward")
 				.rotationEffect(timeMachine.interfaceState.datePickerVisible ? .degrees(90) : .zero)
 				.imageScale(.small)
 				.foregroundStyle(.secondary)
-			
+
 			timeTravelLabelThatFits
 		}
 	}
-	
-	@ViewBuilder
+
 	private var timeTravelLabelThatFits: some View {
 		ViewThatFits(in: .horizontal) {
 			timeTravelLabel
-			
+
 			timeTravelLabel.labelStyle(.titleOnly)
 		}
 	}
-	
-	@ViewBuilder
+
 	private var timeTravelLabel: some View {
 		Label {
 			Group {
@@ -142,23 +142,23 @@ private extension TimeMachineView {
 					}
 				}
 			}
-				.allowsTightening(true)
-				.transition(.blurReplace)
-				.contentTransition(.numericText())
-				.animation(.default, value: timeMachine.date)
-				.animation(.default, value: timeMachine.isActive)
-				.minimumScaleFactor(0.8)
-				.lineLimit(2)
-				.truncationMode(.middle)
+			.allowsTightening(true)
+			.transition(.blurReplace)
+			.contentTransition(.numericText())
+			.animation(.default, value: timeMachine.date)
+			.animation(.default, value: timeMachine.isActive)
+			.minimumScaleFactor(0.8)
+			.lineLimit(2)
+			.truncationMode(.middle)
 		} icon: {
 			Image(systemName: "clock.arrow.trianglehead.2.counterclockwise.rotate.90")
 		}
 	}
-	
+
 	@available(iOS 26, macOS 26, visionOS 26, watchOS 26, *)
 	@ViewBuilder private var preferredSlider: some View {
 		@Bindable var timeMachine = timeMachine
-		
+
 		// Duplicating this Slider initializer isn't ideal, but doing it to avoid a crash that seems related to it
 		if sliderStep <= 0 {
 			Slider(value: $timeMachine.offset, in: timeMachine.range, neutralValue: 0) {
@@ -182,10 +182,10 @@ private extension TimeMachineView {
 			}
 		}
 	}
-	
+
 	@ViewBuilder private var fallbackSlider: some View {
 		@Bindable var timeMachine = timeMachine
-		
+
 		if sliderStep <= 0 {
 			Slider(value: $timeMachine.offset, in: timeMachine.range) {
 				Text("Offset")
@@ -204,8 +204,7 @@ private extension TimeMachineView {
 			}
 		}
 	}
-	
-	@ViewBuilder
+
 	var resetButton: some View {
 		Button("Reset", systemImage: "arrow.counterclockwise") {
 			withAnimation {
@@ -213,16 +212,18 @@ private extension TimeMachineView {
 			}
 		}
 		.disabled(!timeMachine.isActive)
+		.buttonStyle(PaddedPlainButtonStyle(tinted: true))
 	}
 }
 
 private extension TimeMachineView {
 	struct ValueLabel: View {
 		var text: Text
-		
+
 		var body: some View {
 			text
 				.textScale(.secondary)
+				.fixedSize()
 		}
 	}
 }
@@ -266,19 +267,33 @@ public extension TimeMachineView {
 	}
 }
 
-internal struct TimeMachineToggleStyle: ToggleStyle {
+struct TimeMachineToggleStyle: ToggleStyle {
 	func makeBody(configuration: Configuration) -> some View {
 		Button {
 			configuration.isOn.toggle()
 		} label: {
 			configuration.label
 		}
-		.contentShape(.rect)
-		.buttonStyle(.plain)
+		.buttonStyle(PaddedPlainButtonStyle())
 	}
 }
 
-@MainActor public func relativeTimeStampBuilder(style: Text.DateStyle, timeMachine: TimeMachine, timeZone: TimeZone?) -> Text {
+struct PaddedPlainButtonStyle: ButtonStyle {
+	@Environment(\.isEnabled) private var isEnabled
+	var tinted = false
+	func makeBody(configuration: Configuration) -> some View {
+		configuration.label
+			.foregroundStyle(!isEnabled ? AnyShapeStyle(.tertiary) : tinted ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
+			.opacity(configuration.isPressed ? 0.6 : 1)
+			.padding(.vertical, 4)
+			.padding(.horizontal, 8)
+			.contentShape(ButtonBorderShape.automatic)
+			.padding(.vertical, -4)
+			.padding(.horizontal, -8)
+	}
+}
+
+@MainActor public func relativeTimeStampBuilder(style: Text.DateStyle, timeMachine: TimeMachine, timeZone _: TimeZone?) -> Text {
 	Text("\(timeMachine.date, style: style) (\(timeMachine.formattedOffset))")
 }
 

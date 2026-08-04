@@ -7,11 +7,10 @@
 
 import SwiftUI
 
-#if os(iOS)
-@available(iOS 26, *)
+@available(iOS 26, macOS 26, visionOS 26, *)
 private struct TimeMachineViewPreview: View {
 	@Environment(\.timeMachine) var timeMachine
-	
+
 	var body: some View {
 		NavigationStack {
 			VStack(spacing: -40) {
@@ -21,16 +20,16 @@ private struct TimeMachineViewPreview: View {
 						.font(.system(size: 32).leading(.tight))
 						.fontWidth(.expanded)
 						.fontWeight(.medium)
-					
+
 					Text(timeMachine.date, style: .time)
 						.font(.system(size: 300).leading(.tight))
 						.fontWidth(.compressed)
 						.fontWeight(.ultraLight)
 				}
-					.frame(maxWidth: .infinity)
-					.contentTransition(.numericText())
-					.animation(.default, value: timeMachine.date)
-					.foregroundStyle(.tint)
+				.frame(maxWidth: .infinity)
+				.contentTransition(.numericText())
+				.animation(.default, value: timeMachine.date)
+				.foregroundStyle(.tint)
 				Spacer()
 			}
 			.safeAreaBar(edge: .bottom) {
@@ -42,10 +41,10 @@ private struct TimeMachineViewPreview: View {
 				} relativeTimestampLabel: { t, tz in
 					relativeTimeStampBuilder(style: .time, timeMachine: t, timeZone: tz)
 				}
-					.padding()
-					.clipped()
-					.glassEffect(in: .rect(cornerRadius: 20, style: .continuous))
-					.scenePadding()
+				.padding()
+				.clipped()
+				.glassEffect(in: .rect(cornerRadius: 20, style: .continuous))
+				.scenePadding()
 			}
 		}
 	}
@@ -54,7 +53,6 @@ private struct TimeMachineViewPreview: View {
 #Preview {
 	if #available(iOS 26, visionOS 26, watchOS 26, macOS 26, *) {
 		TimeMachineViewPreview()
-			.withTimeMachine(incrementUnit: .minute, incrementRange: -720...720)
+			.withTimeMachine(incrementUnit: .minute, incrementRange: -720 ... 720)
 	}
 }
-#endif

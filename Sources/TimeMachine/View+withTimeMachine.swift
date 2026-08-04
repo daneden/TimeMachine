@@ -14,27 +14,27 @@ public enum TimeMachineUpdateFrequency {
 private struct TimeMachineViewModifier: ViewModifier {
 	@State var timeMachine: TimeMachine
 	var schedule: TimeMachineUpdateFrequency = .everyMinute
-	
+
 	init(timeMachine: TimeMachine, schedule: TimeMachineUpdateFrequency) {
 		self.timeMachine = timeMachine
 		self.schedule = schedule
 	}
-	
+
 	init(
 		incrementUnit: Calendar.Component = .day,
-		incrementRange: ClosedRange<Double> = -182...182,
+		incrementRange: ClosedRange<Double> = -182 ... 182,
 		updateFrequency: TimeMachineUpdateFrequency
 	) {
-		self.timeMachine = TimeMachine(incrementUnit: incrementUnit, incrementRange: incrementRange)
-		self.schedule = updateFrequency
+		timeMachine = TimeMachine(incrementUnit: incrementUnit, incrementRange: incrementRange)
+		schedule = updateFrequency
 	}
-	
+
 	private var timelineSchedule: PeriodicTimelineSchedule {
 		let components = Calendar.current.dateComponents([.hour, .minute], from: Date())
 		let date = Calendar.current.date(bySettingHour: components.hour ?? 0,
-																		 minute: components.minute ?? 0,
-																		 second: 0,
-																		 of: Date())
+		                                 minute: components.minute ?? 0,
+		                                 second: 0,
+		                                 of: Date())
 		switch schedule {
 		case .everyMinute:
 			return PeriodicTimelineSchedule(from: date ?? .now, by: 60)
@@ -42,7 +42,7 @@ private struct TimeMachineViewModifier: ViewModifier {
 			return PeriodicTimelineSchedule(from: date ?? .now, by: 1)
 		}
 	}
-	
+
 	func body(content: Content) -> some View {
 		content
 			.environment(\.timeMachine, timeMachine)
@@ -59,14 +59,14 @@ private struct TimeMachineViewModifier: ViewModifier {
 public extension View {
 	func withTimeMachine(
 		incrementUnit: Calendar.Component = .day,
-		incrementRange: ClosedRange<Double> = -182...182,
+		incrementRange: ClosedRange<Double> = -182 ... 182,
 		updateFrequency: TimeMachineUpdateFrequency = .everyMinute
 	) -> some View {
 		modifier(TimeMachineViewModifier(incrementUnit: incrementUnit,
-																		 incrementRange: incrementRange,
-																		 updateFrequency: updateFrequency))
+		                                 incrementRange: incrementRange,
+		                                 updateFrequency: updateFrequency))
 	}
-	
+
 	func withTimeMachine(
 		_ timeMachine: TimeMachine,
 		updateFrequency: TimeMachineUpdateFrequency = .everyMinute

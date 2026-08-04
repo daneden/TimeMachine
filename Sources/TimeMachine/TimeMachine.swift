@@ -1,85 +1,93 @@
 //
-//  TimeMachineView.swift
+//  TimeMachine.swift
 //  TimeMachine
 //
 //  Created by Daniel Eden on 17/09/2025.
 //
 
-import Observation
 import Foundation
+import Observation
 import OSLog
 
 @MainActor @Observable
-final public class TimeMachine {
-	nonisolated init() { }
-	
+public final class TimeMachine {
+	nonisolated init() {}
+
 	public init(referenceDate: Date = .now,
-							incrementUnit: Calendar.Component = .day,
-							incrementRange: ClosedRange<Double> = -12...12) {
+	            incrementUnit: Calendar.Component = .day,
+	            incrementRange: ClosedRange<Double> = -12 ... 12)
+	{
 		self.referenceDate = referenceDate
 		self.incrementUnit = incrementUnit
-		self.range = incrementRange
+		range = incrementRange
 	}
-	
+
 	// MARK: Reference values and constants
+
 	public private(set) var referenceDate: Date = .now
 	public private(set) var incrementUnit: Calendar.Component = .day
-	public private(set) var range: ClosedRange<Double> = -12...12
-	
+	public private(set) var range: ClosedRange<Double> = -12 ... 12
+
 	// MARK: Variables
+
 	public var offset: Double = 0
-	
+
 	public var date: Date {
 		get {
 			Calendar.current.date(byAdding: incrementUnit, value: Int(offset.rounded(.toNearestOrAwayFromZero)), to: referenceDate) ?? referenceDate
 		}
-		
+
 		set {
 			offset = convertTime(from: referenceDate.distance(to: newValue), to: incrementUnit)
 		}
 	}
-	
+
 	public var interfaceState = InterfaceState()
-	
+
 	public func updateReferenceDate(to newDate: Date = .now) {
 		referenceDate = newDate
 	}
-	
-	public func reset() { offset = 0 }
-	
+
+	public func reset() {
+		offset = 0
+	}
+
 	// MARK: Computed variables
+
 	@ObservationIgnored
 	public var formattedOffset: String {
 		formatDuration(offsetInSeconds)
 	}
-	
+
 	@ObservationIgnored
 	public var formattedRoundedOffset: String {
 		formatDuration(roundedOffset)
 	}
-	
-	public var isActive: Bool { offset != 0 }
+
+	public var isActive: Bool {
+		offset != 0
+	}
 }
 
-@MainActor fileprivate var defaultAccessCount = 0
+@MainActor private var defaultAccessCount = 0
 
-internal extension TimeMachine {
+extension TimeMachine {
 	nonisolated static let `default`: TimeMachine = {
 		Task {
-			await MainActor.run() {
+			await MainActor.run {
 				defaultAccessCount += 1
-				
+
 				if defaultAccessCount > 1 {
 					Logger(subsystem: "me.daneden.framework", category: "TimeMachine")
 						.warning("""
-	The `TimeMachine.default` singleton was unexpectedly accessed.
-	
-	This usually happens when `TimeMachineView` is rendered or the `\\.timeMachine` environment variable is accessed without calling `.withTimeMachine()` on an ancestor view.
-	""")
+						The `TimeMachine.default` singleton was unexpectedly accessed.
+
+						This usually happens when `TimeMachineView` is rendered or the `\\.timeMachine` environment variable is accessed without calling `.withTimeMachine()` on an ancestor view.
+						""")
 				}
 			}
 		}
-		
+
 		return TimeMachine()
 	}()
 }
@@ -105,11 +113,11 @@ private extension TimeMachine {
 			return 0
 		}
 	}
-	
+
 	var offsetInSeconds: TimeInterval {
 		offsetInSeconds(offset)
 	}
-	
+
 	func offsetInSeconds(_ offset: Double) -> TimeInterval {
 		switch incrementUnit {
 		case .second:
@@ -136,15 +144,15 @@ public extension TimeMachine {
 	var roundedOffset: Double {
 		offsetInSeconds(convertTime(from: offsetInSeconds, to: incrementUnit).rounded(.toNearestOrAwayFromZero))
 	}
-	
+
 	var rangeLowerBoundSeconds: TimeInterval {
 		offsetInSeconds(range.lowerBound)
 	}
-	
+
 	var rangeUpperBoundSeconds: TimeInterval {
 		offsetInSeconds(range.upperBound)
 	}
-	
+
 	func formatDuration(_ duration: TimeInterval) -> String {
 		return (duration >= 0 ? "+" : "") + Duration.seconds(duration).formatted(.units(
 			allowed: [.weeks, .days, .hours, .minutes],
