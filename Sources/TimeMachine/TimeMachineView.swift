@@ -298,7 +298,9 @@ struct PaddedPlainButtonStyle: ButtonStyle {
 			.padding(.vertical, 4)
 			.padding(.horizontal, 8)
 			.contentShape(ButtonBorderShape.automatic)
+			#if os(visionOS)
 			.hoverEffect(.automatic)
+			#endif
 			.padding(.vertical, -4)
 			.padding(.horizontal, -8)
 	}
