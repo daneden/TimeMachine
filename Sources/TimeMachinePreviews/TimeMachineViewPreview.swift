@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import TimeMachine
 
 @available(iOS 26, macOS 26, visionOS 26, *)
 private struct TimeMachineViewPreview: View {
@@ -44,11 +45,11 @@ private struct TimeMachineViewPreview: View {
 				.padding()
 				.clipped()
 				#if os(visionOS)
-				.glassBackgroundEffect(in: .rect(cornerRadius: 20, style: .continuous))
+					.glassBackgroundEffect(in: .rect(cornerRadius: 20, style: .continuous))
 				#else
-				.glassEffect(in: .rect(cornerRadius: 20, style: .continuous))
+					.glassEffect(in: .rect(cornerRadius: 20, style: .continuous))
 				#endif
-				.scenePadding()
+					.scenePadding()
 			}
 		}
 	}

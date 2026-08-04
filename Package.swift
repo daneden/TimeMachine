@@ -24,6 +24,13 @@ let package = Package(
 		.target(
 			name: "TimeMachine"
 		),
+		// Preview-only target. It is not part of any product, so package
+		// consumers never build it. Xcode builds it when this package is
+		// opened directly, which keeps previews working here.
+		.target(
+			name: "TimeMachinePreviews",
+			dependencies: ["TimeMachine"]
+		),
 		.testTarget(
 			name: "TimeMachineTests",
 			dependencies: ["TimeMachine"]
