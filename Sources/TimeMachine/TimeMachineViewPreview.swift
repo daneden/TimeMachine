@@ -43,7 +43,11 @@ private struct TimeMachineViewPreview: View {
 				}
 				.padding()
 				.clipped()
+				#if os(visionOS)
+				.glassBackgroundEffect(in: .rect(cornerRadius: 20, style: .continuous))
+				#else
 				.glassEffect(in: .rect(cornerRadius: 20, style: .continuous))
+				#endif
 				.scenePadding()
 			}
 		}
