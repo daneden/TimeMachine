@@ -43,11 +43,11 @@ public struct TimeMachineView<L: View>: View {
 
 	public var body: some View {
 		@Bindable var timeMachine = self.timeMachine
-		
+
 		#if os(visionOS)
-		let spacing: CGFloat = 16
+			let spacing: CGFloat = 16
 		#else
-		let spacing: CGFloat = 8
+			let spacing: CGFloat = 8
 		#endif
 
 		VStack(spacing: spacing) {
@@ -57,7 +57,7 @@ public struct TimeMachineView<L: View>: View {
 						Toggle(isOn: $timeMachine.interfaceState.datePickerVisible.animation()) {
 							toggleButtonLabel
 						}
-						.accessibilityLabel(Text("Toggle date picker"))
+						.accessibilityLabel(Text("Toggle date picker", bundle: #bundle))
 						.toggleStyle(TimeMachineToggleStyle())
 						.tint(.primary)
 					} else {
@@ -78,13 +78,13 @@ public struct TimeMachineView<L: View>: View {
 
 			Group {
 				#if os(watchOS)
-				fallbackSlider
-				#else
-				if #available(macOS 26, iOS 26, visionOS 26, *) {
-					preferredSlider
-				} else {
 					fallbackSlider
-				}
+				#else
+					if #available(macOS 26, iOS 26, visionOS 26, *) {
+						preferredSlider
+					} else {
+						fallbackSlider
+					}
 				#endif
 			}
 			.labelsHidden()
@@ -168,7 +168,7 @@ private extension TimeMachineView {
 		// Duplicating this Slider initializer isn't ideal, but doing it to avoid a crash that seems related to it
 		if sliderStep <= 0 {
 			Slider(value: $timeMachine.offset, in: timeMachine.range, neutralValue: 0) {
-				Text("Offset")
+				Text("Offset", bundle: #bundle)
 			} currentValueLabel: {
 				Text(timeMachine.formattedOffset)
 			} minimumValueLabel: {
@@ -178,7 +178,7 @@ private extension TimeMachineView {
 			}
 		} else {
 			Slider(value: $timeMachine.offset, in: timeMachine.range, step: sliderStep, neutralValue: 0) {
-				Text("Offset")
+				Text("Offset", bundle: #bundle)
 			} currentValueLabel: {
 				Text(timeMachine.formattedOffset)
 			} minimumValueLabel: {
@@ -194,7 +194,7 @@ private extension TimeMachineView {
 
 		if sliderStep <= 0 {
 			Slider(value: $timeMachine.offset, in: timeMachine.range) {
-				Text("Offset")
+				Text("Offset", bundle: #bundle)
 			} minimumValueLabel: {
 				ValueLabel(text: minimumValueLabel(timeMachine, timeZone))
 			} maximumValueLabel: {
@@ -202,7 +202,7 @@ private extension TimeMachineView {
 			}
 		} else {
 			Slider(value: $timeMachine.offset, in: timeMachine.range, step: sliderStep) {
-				Text("Offset")
+				Text("Offset", bundle: #bundle)
 			} minimumValueLabel: {
 				ValueLabel(text: minimumValueLabel(timeMachine, timeZone))
 			} maximumValueLabel: {
@@ -212,16 +212,22 @@ private extension TimeMachineView {
 	}
 
 	var resetButton: some View {
-		Button("Reset", systemImage: "arrow.counterclockwise") {
+		Button {
 			withAnimation {
 				timeMachine.reset()
+			}
+		} label: {
+			Label {
+				Text("Reset", bundle: #bundle)
+			} icon: {
+				Image(systemName: "arrow.counterclockwise")
 			}
 		}
 		.disabled(!timeMachine.isActive)
 		#if os(visionOS)
-		.buttonStyle(PaddedPlainButtonStyle())
+			.buttonStyle(PaddedPlainButtonStyle())
 		#else
-		.buttonStyle(PaddedPlainButtonStyle(tinted: true))
+			.buttonStyle(PaddedPlainButtonStyle(tinted: true))
 		#endif
 	}
 }
@@ -260,9 +266,7 @@ public extension TimeMachineView {
 		maximumValueLabel: @escaping LabelBuilder = { t, _ in
 			Text(t.formatDuration(t.rangeUpperBoundSeconds))
 		},
-		datePickerLabel: @escaping LabelBuilder = { _, _ in
-			Text("Choose date/time")
-		}
+		datePickerLabel: LabelBuilder? = nil
 	) {
 		self.sliderStep = sliderStep
 		self.enableDatePicker = enableDatePicker
@@ -273,7 +277,9 @@ public extension TimeMachineView {
 		self.relativeTimestampLabel = relativeTimestampLabel
 		self.minimumValueLabel = minimumValueLabel
 		self.maximumValueLabel = maximumValueLabel
-		self.datePickerLabel = datePickerLabel
+		self.datePickerLabel = datePickerLabel ?? { _, _ in
+			Text("Choose date/time", bundle: #bundle)
+		}
 	}
 }
 
@@ -298,16 +304,16 @@ struct PaddedPlainButtonStyle: ButtonStyle {
 			.padding(.vertical, 4)
 			.padding(.horizontal, 8)
 			.contentShape(ButtonBorderShape.automatic)
-			#if os(visionOS)
+		#if os(visionOS)
 			.hoverEffect(.automatic)
-			#endif
+		#endif
 			.padding(.vertical, -4)
 			.padding(.horizontal, -8)
 	}
 }
 
 @MainActor public func relativeTimeStampBuilder(style: Text.DateStyle, timeMachine: TimeMachine, timeZone _: TimeZone?) -> Text {
-	Text("\(timeMachine.date, style: style) (\(timeMachine.formattedOffset))")
+	Text("\(timeMachine.date, style: style) (\(timeMachine.formattedOffset))", bundle: #bundle)
 }
 
 #Preview {
